@@ -47,10 +47,11 @@ def register():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        flash("Successfully Logged In", "success")
-        return redirect(url_for('home'))
-    else:
-        flash('Login failed, please check username and password', 'danger')
+        if form.email.data == 'dummy_email@gemail.com' and form.password.data == 'Password123':
+            flash("Successfully Logged In", "success")
+            return redirect(url_for('home'))
+        else:
+            flash('Login failed, please check username and password', 'danger')
     return render_template('login.template.html',
                            form=form, title='Login')
 
