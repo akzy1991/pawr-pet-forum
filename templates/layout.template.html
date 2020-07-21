@@ -31,13 +31,16 @@
     <!-- navbar -->
     <nav class="navbar navbar-expand-md navbar-light bg-light sticky-top">
         <div class="container">
+             <!-- navbar brand -->
             <a class="navbar-brand brand-pawr" href="{{url_for('home')}}">
                 <p>pawr</p>
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            <!-- main nav -->
             <div class="collapse navbar-collapse" id="navbarToggle">
+                <!-- nav left -->
                 <div class="navbar-nav mr-auto">
                     <a class="nav-item nav-link" href="{{url_for('home')}}">Home</a>
                     <a class="nav-item nav-link" href="/about">About</a>
@@ -67,6 +70,7 @@
       {% block content %}{% endblock %}
     </div>
 
+    <!-- scripts -->
     <script
       src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
       integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
