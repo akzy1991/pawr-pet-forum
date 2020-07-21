@@ -16,6 +16,17 @@ app = Flask(__name__)
 MONGO_URI = os.environ.get('MONGO_URI')
 client = pymongo.MongoClient(MONGO_URI)
 
+
+# define my db_name
+DB_NAME = "pawr"
+
+# read in the SESSION_KEY variable from the operating system environment
+SESSION_KEY = os.environ.get('SESSION_KEY')
+
+# set the session key
+app.secret_key = SESSION_KEY
+
+
 # login manager
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
@@ -40,16 +51,6 @@ def user_loader(email):
         user.id = user_in_db['email']
     else:
         return None
-
-
-# define my db_name
-DB_NAME = "pawr"
-
-# read in the SESSION_KEY variable from the operating system environment
-SESSION_KEY = os.environ.get('SESSION_KEY')
-
-# set the session key
-app.secret_key = SESSION_KEY
 
 
 # routes start here
