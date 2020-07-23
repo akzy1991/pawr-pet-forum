@@ -2,8 +2,9 @@
 
 
 {% block content %}
+    <a href="{{ url_for('new_post') }}" class="btn btn-warning btn-block mt-2 ">+ Ask Question</a>
     {% for post in posts%}
-        <div class="card mt-4">
+        <div class="card mt-2">
             <div class="card-body">
                 <h3 class="card-header">{{post.title}}</h3>
                 <small class="text-muted">Posted on {{post.datetime_posted}}</small>

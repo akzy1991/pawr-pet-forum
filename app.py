@@ -4,6 +4,7 @@ import flask_login
 from dotenv import load_dotenv
 from forms import NewPostForm, RegistrationForm, LoginForm
 from bson import ObjectId
+from flask_bcrypt import Bcrypt
 import os
 from datetime import datetime
 
@@ -12,7 +13,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# connect to mongo
+# connect to mongodb
 MONGO_URI = os.environ.get('MONGO_URI')
 client = pymongo.MongoClient(MONGO_URI)
 
@@ -22,14 +23,15 @@ DB_NAME = "pawr"
 
 # read in the SESSION_KEY variable from the operating system environment
 SESSION_KEY = os.environ.get('SESSION_KEY')
-
-# set the session key
 app.secret_key = SESSION_KEY
 
 
 # login manager
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
+
+# password encryption
+bc = Bcrypt(app)
 
 
 # create user object
@@ -68,10 +70,10 @@ def register():
         client[DB_NAME].users.insert_one({
             'username': form.username.data,
             'email': form.email.data,
-            'password': form.password.data
+            'password': bc.generate_password_hash(form.password.data).decode('utf-8'),
         })
-        flash('Account Created Succesfully', "success")
-        return redirect(url_for('home'))
+        flash('Your account has been created, please log in', "success")
+        return redirect(url_for('login'))
     return render_template('register.template.html',
                            form=form, title='Sign Up')
 
@@ -86,7 +88,7 @@ def login():
         if user_in_db:
             user = User()
             user.id = user_in_db['email']
-            if form.password.data == user_in_db['password']:
+            if bc.check_password_hash(user_in_db['password'], form.password.data):
                 flask_login.login_user(user)
                 flash("Successfully Logged In", "success")
                 return redirect(url_for('home'))
