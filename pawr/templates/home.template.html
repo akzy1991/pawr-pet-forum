@@ -2,12 +2,14 @@
 
 
 {% block content %}
+    {% if current_user.is_authenticated %}
     <a href="{{ url_for('new_post') }}" class="btn btn-warning btn-block mt-2 ">+ Ask Question</a>
+    {% endif %}
     {% for post in posts%}
         <div class="card mt-2">
             <div class="card-body">
                 <h3 class="card-header">{{post.title}}</h3>
-                <small class="text-muted">Posted on {{post.datetime_posted}}</small>
+                <small class="text-muted">Posted on {{post.datetime_posted}} by {% if post.author %}{{ post.author.username }}{% else %}anonymous{% endif %}</small>
                 <p class="card-text">{{post.content}}</p>
             </div>
         </div>
