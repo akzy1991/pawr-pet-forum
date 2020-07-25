@@ -27,6 +27,9 @@ app.secret_key = SESSION_KEY
 # login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message_category = 'info'
+
 
 # password encryption
 bc = Bcrypt(app)

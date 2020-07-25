@@ -4,12 +4,10 @@ from wtforms.validators import DataRequired, Length, Email, EqualTo
 from pawr import client, DB_NAME
 
 
-class NewPostForm(FlaskForm):
-    title = StringField('Title', validators=[DataRequired(),
-                                             Length(min=2, max=500)])
-    content = TextAreaField('Content', validators=[DataRequired(),
-                                                   Length(min=2, max=500)])
-    submit = SubmitField('Post')
+class QuestionForm(FlaskForm):
+    question = TextAreaField('Question', validators=[DataRequired(),
+                                                     Length(min=2, max=500)])
+    submit = SubmitField('Submit')
 
 
 class RegistrationForm(FlaskForm):
@@ -32,3 +30,9 @@ class LoginForm(FlaskForm):
                              validators=[DataRequired()])
     remember = BooleanField('Remember Me')
     submit = SubmitField('Login')
+
+
+class AnswerForm(FlaskForm):
+    answer = TextAreaField('Content', validators=[DataRequired(),
+                                                  Length(min=2, max=500)])
+    submit = SubmitField('Submit Answer')
