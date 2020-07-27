@@ -149,3 +149,16 @@ def edit_question(question_id):
     return render_template('question.template.html',
                            title='Edit Question',
                            header='Edit Question', form=form)
+
+
+@app.route('/question/delete/<question_id>', methods=["POST"])
+def confirm_delete(question_id):
+    question = client[DB_NAME].questions.find_one({
+        "_id": ObjectId(question_id)
+    })
+    if question['author']['username'] != current_user.username:
+        abort(403)
+    client[DB_NAME].questions.remove({
+        "_id": ObjectId(question_id)
+    })
+    return redirect(url_for('home'))
