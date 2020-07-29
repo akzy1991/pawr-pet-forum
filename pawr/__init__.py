@@ -15,7 +15,6 @@ app = Flask(__name__)
 MONGO_URI = os.environ.get('MONGO_URI')
 client = pymongo.MongoClient(MONGO_URI)
 
-
 # define my db_name
 DB_NAME = "pawr"
 

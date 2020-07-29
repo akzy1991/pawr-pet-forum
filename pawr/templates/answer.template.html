@@ -8,16 +8,16 @@
                 <fieldset class="form-group">
                     <legend class="card-header border-bottom border-warning mb-3">{{ header }}</legend>
                     <div class="form-group">
-                        {{ form.question.label(class='form-control-label') }}
-                        {% if form.question.errors %}
-                            {{ form.question(class='form-control is-invalid') }}
+                        {{ form.answer.label(class='form-control-label') }}
+                        {% if form.answer.errors %}
+                            {{ form.answer(class='form-control is-invalid') }}
                             <div class="invalid-feedback">
-                                {% for error in form.question.errors %}
+                                {% for error in form.answer.errors %}
                                     <span>{{ error }}</span>
                                 {% endfor %}
                             </div>
                         {% else %}
-                            {{ form.question(class='form-control') }}
+                            {{ form.answer(class='form-control') }}
                         {% endif %}
                     </div>
                 </fieldset>

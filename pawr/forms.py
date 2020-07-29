@@ -33,6 +33,6 @@ class LoginForm(FlaskForm):
 
 
 class AnswerForm(FlaskForm):
-    answer = TextAreaField('Content', validators=[DataRequired(),
-                                                  Length(min=2, max=500)])
-    submit = SubmitField('Submit Answer')
+    answer = TextAreaField('Answer', validators=[DataRequired(),
+                                                 Length(min=2, max=1000)])
+    submit = SubmitField('Submit')

@@ -1,9 +1,58 @@
 from flask import render_template, redirect, url_for, flash, request, abort
 from flask_login import login_user, current_user, logout_user, login_required
-from pawr.forms import QuestionForm, RegistrationForm, LoginForm
-from pawr import app, client, DB_NAME, bc, login_manager, User
+from pawr.forms import QuestionForm, RegistrationForm, LoginForm, AnswerForm
+from pawr import app, client, DB_NAME, bc, login_manager, User, pymongo
 from bson.objectid import ObjectId
 from datetime import datetime
+
+
+# code to humanize time taken from
+# https://shubhamjain.co/til/how-to-render-human-readable-time-in-jinja/
+def humanize_ts(time=False):
+    """
+    Get a datetime object or a int() Epoch timestamp and return a
+    pretty string like 'an hour ago', 'Yesterday', '3 months ago',
+    'just now', etc
+    """
+    from datetime import datetime
+    now = datetime.now()
+    if type(time) is int:
+        diff = now - datetime.fromtimestamp(time)
+    elif isinstance(time, datetime):
+        diff = now - time
+    elif not time:
+        diff = now - now
+    second_diff = diff.seconds
+    day_diff = diff.days
+
+    if day_diff < 0:
+        return ''
+
+    if day_diff == 0:
+        if second_diff < 10:
+            return "just now"
+        if second_diff < 60:
+            return str(int(second_diff)) + " seconds ago"
+        if second_diff < 120:
+            return "a minute ago"
+        if second_diff < 3600:
+            return str(int(second_diff / 60)) + " minutes ago"
+        if second_diff < 7200:
+            return "an hour ago"
+        if second_diff < 86400:
+            return str(int(second_diff / 3600)) + " hours ago"
+    if day_diff == 1:
+        return "Yesterday"
+    if day_diff < 7:
+        return str(day_diff) + " days ago"
+    if day_diff < 31:
+        return str(int(day_diff / 7)) + " weeks ago"
+    if day_diff < 365:
+        return str(int(day_diff / 30)) + " months ago"
+    return str(int(day_diff / 365)) + " years ago"
+
+
+app.jinja_env.filters['humanize'] = humanize_ts
 
 
 @login_manager.user_loader
@@ -27,8 +76,19 @@ def load_user(email):
 @app.route('/')
 @app.route('/home')
 def home():
-    all_questions = client[DB_NAME].questions.find()
-    return render_template('home.template.html', questions=all_questions, title='home')
+    # search bar
+    search_terms = request.args.get('search-terms')
+    criteria = {}
+    if search_terms != '' and search_terms is not None:
+        criteria['question'] = {
+            '$regex': search_terms,
+            '$options': "i"
+        }
+    print(criteria)
+    questions = client[DB_NAME].questions.find(criteria)
+    questions.sort('datetime_posted', pymongo.DESCENDING)
+    return render_template('home.template.html',
+                           questions=questions, title='home')
 
 
 @app.route('/register', methods=["GET", "POST"])
@@ -132,6 +192,8 @@ def edit_question(question_id):
     })
     if question['author']['username'] != current_user.username:
         abort(403)
+        flash('You are not authorized to view this page')
+        return redirect(url_for('home'))
     form = QuestionForm()
     if form.validate_on_submit():
         updated_question = form.question.data
@@ -140,7 +202,6 @@ def edit_question(question_id):
             "_id": ObjectId(question_id)
         }, {
             "$set": {
-                "hello": 'hello',
                 "question": updated_question
             }
         })
@@ -152,6 +213,7 @@ def edit_question(question_id):
 
 
 @app.route('/question/delete/<question_id>', methods=["POST"])
+@login_required
 def confirm_delete(question_id):
     question = client[DB_NAME].questions.find_one({
         "_id": ObjectId(question_id)
@@ -162,3 +224,104 @@ def confirm_delete(question_id):
         "_id": ObjectId(question_id)
     })
     return redirect(url_for('home'))
+
+
+@app.route('/question/answer/<question_id>', methods=["GET", "POST"])
+@login_required
+def answer_question(question_id):
+    question = client[DB_NAME].questions.find_one({
+        "_id": ObjectId(question_id)
+    })
+    form = AnswerForm()
+    if form.validate_on_submit():
+        client[DB_NAME].questions.update_one({
+            "_id": ObjectId(question_id),
+        }, {
+            "$push": {
+                'answers': {
+                    # ObjectId() is a function that returns a new ObjectId
+                    "_id": ObjectId(),
+                    "answer": form.answer.data,
+                    "datetime_posted": datetime.now().replace(microsecond=0),
+                    "author": {
+                        'email': current_user.id,
+                        'username': current_user.username
+                    }
+                }
+            }
+        })
+        flash('Answer successfully submitted', 'success')
+        return redirect(url_for('home'))
+    return render_template('answer.template.html',
+                           title='Answer',
+                           header=f"Q: {question['question']}",
+                           question=question,
+                           form=form)
+
+
+@app.route('/question/answer/delete/<answer_id>', methods=["POST"])
+@login_required
+def confirm_delete_answer(answer_id):
+    answer_to_delete = client[DB_NAME].questions.find_one({
+        'answers._id': ObjectId(answer_id)
+    }, {
+        'answers': {
+            '$elemMatch': {
+                '_id': ObjectId(answer_id)
+            }
+        }
+    })['answers'][0]
+    if answer_to_delete['author']['username'] != current_user.username:
+        abort(403)
+        flash('You are not authorized to view this page')
+        return redirect(url_for('home'))
+    client[DB_NAME].questions.update_one({
+        'answers._id': ObjectId(answer_id)
+    }, {
+        "$pull": {
+            'answers': {
+                '_id': ObjectId(answer_id)
+            }
+        }
+    })
+    flash('Answer successfully deleted', 'success')
+    return redirect(url_for('home'))
+
+
+@app.route('/question/answer/edit/<answer_id>', methods=["GET", "POST"])
+@login_required
+def edit_answer(answer_id):
+    answer_to_delete = client[DB_NAME].questions.find_one({
+        'answers._id': ObjectId(answer_id)
+    }, {
+        'answers': {
+            '$elemMatch': {
+                '_id': ObjectId(answer_id)
+            }
+        }
+    })['answers'][0]
+    question = client[DB_NAME].questions.find_one({
+        'answers._id': ObjectId(answer_id)
+    })
+
+    if answer_to_delete['author']['username'] != current_user.username:
+        abort(403)
+        flash('You are not authorized to view this page')
+        return redirect(url_for('home'))
+
+    form = AnswerForm()
+    if form.validate_on_submit():
+        updated_answer = form.answer.data
+        client[DB_NAME].questions.update_one({
+            'answers._id': ObjectId(answer_id)
+        }, {
+            "$set": {
+                'answers.$.answer': updated_answer,
+            }
+        })
+        flash('Answer successfully edited', 'success')
+        return redirect(url_for('home'))
+    form.answer.data = answer_to_delete['answer']
+    return render_template('answer.template.html',
+                           title='Edit Answer',
+                           header=f"Q: {question['question']}", form=form)

@@ -2,24 +2,71 @@
 
 
 {% block content %}
-    {% if current_user.is_authenticated %}
-    <a href="{{ url_for('new_question') }}" class="btn btn-warning btn-block ">+ Ask Question</a>
-    {% endif %}
+    <h1 class="mt-2">All Questions</h1>
+    <form class="form-inline mt-3" method="GET">
+        <input class="form-control mr-2 flex-grow-1 border border-light" type="text" name="search-terms" placeholder="Search questions">
+        <input class="btn btn-info ml-auto" type="submit" value="Search">
+    </form>
     {% for question in questions %}
-    <div class="card mt-2">
+    <div class="card border-warning mt-3 mb-3">
         <div class="card-body">
-            <div class="card-header">
-                <p class="mb-0"><strong>{% if question.author %}{{ question.author.username }}{% else %}anonymous{% endif %}</strong></p>
-                <p class="text-muted mb-0">{{question.datetime_posted}}</p>
-            </div>
-            <h5 class="mt-2 p-2"><strong>{{question.question}}</strong></h5>
+            <h5 class="mt-2 p-2"><strong>Q: {{question.question}}</strong></h5>
             {% if current_user.username == question.author.username %}
-            <a class="btn btn-info" href="{{ url_for('edit_question', question_id=question._id) }}">Edit</a>
-            <button class="btn btn-danger" data-toggle="modal" data-target="#deleteQuestionModal" data-id="{{question._id}}">Delete</button>
+            <div class="row">
+                <p class="mb-0 text-muted m-2 ml-4">
+                    Question submitted by <strong>me</strong> {{ question.datetime_posted|humanize }}
+                </p>
+                <div class="ml-auto mr-2">
+                    <a class="btn btn-outline-info" href="{{ url_for('edit_question', question_id=question._id) }}">Edit</a>
+                    <button class="btn btn-outline-danger" data-toggle="modal" data-target="#deleteQuestionModal" data-id="{{question._id}}">Delete</button>
+                </div>
+            </div>
             {% else %}
-            <a class="mt-2 btn btn-outline-info" href="">Answer</a>
+            <div class="row">
+                <p class="mb-0 text-muted m-2 ml-4">
+                    Question submitted by <strong>{{ question.author.username }}</strong> {{ question.datetime_posted|humanize }}
+                </p>
+                <div class="ml-auto mr-2">
+                    <a class="btn btn-outline-info btn-lg" href="{{url_for('answer_question', question_id=question._id)}}">Answer</a>
+                </div>
+            </div>
             {% endif %}
          </div>
+         {% if question.answers %}
+         <div class="panel-group">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title m-0">
+                        <a class="btn btn-warning btn-block" data-toggle="collapse" href="#collapse{{question._id}}">View Answers ({{question.answers|length}})</a>
+                    </h4>
+                </div>
+                <div id="collapse{{question._id}}" class="panel-collapse collapse">
+                    {% for answer in question.answers | sort(attribute='datetime_posted', reverse=True) %}
+                    <div class="card-body bg-light border p-1 m-3">
+                        <div class="answer-group p-3">
+                            <p class="mb-0"><strong>{{answer.answer}}</strong></p>
+                            {% if current_user.username == answer.author.username %}
+                            <div class="card-buttons mt-2">
+                                <div class="d-inline p-2">
+                                    <a class="btn btn-outline-info" href="{{ url_for('edit_answer', answer_id=answer._id) }}">Edit</a>
+                                    <button class="btn btn-outline-danger" data-toggle="modal" data-target="#deleteAnswerModal" data-id="{{answer._id}}">Delete</button>
+                                    <p class="mb-0 text-muted float-right m-2 p-2">Answer submitted by <strong>me</strong> {{ answer.datetime_posted|humanize }}</p>
+                                </div>
+                            </div>
+                            {% else %}
+                            <p class="mb-0 text-muted text-right m-2 p-2">Answer submitted by <strong>{{answer.author.username}}</strong> {{ answer.datetime_posted|humanize }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+            {% if current_user.username != question.author.username %}
+            <a class="btn btn-warning btn-block" href="{{url_for('answer_question', question_id=question._id)}}">Question not answered yet, be the first the answer</a>
+            {% endif %}
+        {% endif %}
     </div>
     {% endfor %}
 
@@ -34,7 +81,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <form id="deleteForm" method="POST" action="">
+        <form id="deleteQuestionForm" method="POST" action="">
             <input id="confirmDeleteBtn" type="submit" class="btn btn-danger" value="Confirm">
         </form>
       </div>
@@ -42,8 +89,32 @@
   </div>
 </div>
 
+<div class="modal fade" id="deleteAnswerModal" tabindex="-1" role="dialog" aria-labelledby="deleteAnswerModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteAnswerModalLabel">Are you sure you want to delete?</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <form id="deleteAnswerForm" method="POST" action="">
+            <input id="confirmDeleteAnswerBtn" type="submit" class="btn btn-danger" value="Confirm">
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
 {% endblock %}
 
 {% block js %}
 <script src="{{ url_for('static', filename='JS/home.js' )}}"></script>
 {% endblock js %}
+
+
