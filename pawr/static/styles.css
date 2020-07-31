@@ -1,5 +1,6 @@
 body {
     background-color: #f0f0f0;
+    color: #000500;
 }
 
 .brand-pawr p {
@@ -9,4 +10,31 @@ body {
   font-size: 1.5em;
 }
 
+.nav-link {
+    color: #000500;
+}
 
+
+.btn-outline-info {
+    color:#46ACC2;
+    border-color: #46ACC2;
+}
+
+.btn-outline-info:hover {
+    color: #fff;
+    background-color:#46ACC2;
+    border-color: #46ACC2;
+}
+
+.btn-warning {
+    color: #000500;
+}
+
+.btn-warning:hover {
+    color: #000500;
+}
+
+
+.btn-warning:focus {
+    color: #000500;
+}
