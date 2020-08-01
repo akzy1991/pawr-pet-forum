@@ -3,9 +3,9 @@
 
 {% block content %}
     <h1 class="mt-2">All Questions</h1>
-    <form class="form-inline mt-3" method="GET">
-        <input class="form-control mr-2 flex-grow-1 border border-light" type="text" name="search-terms" placeholder="Search questions">
-        <input class="btn btn-info ml-auto" type="submit" value="Search">
+    <form class="form-inline mt-1 justify-content-center" method="GET">
+        <input class="form-control mt-2 mr-2 flex-grow-1 border border-light" type="text" name="search-terms" placeholder="Search questions">
+        <input class="btn btn-info mt-2" type="submit" value="Search">
     </form>
     {% for question in questions %}
     <div class="card border-warning mt-3 mb-3">
